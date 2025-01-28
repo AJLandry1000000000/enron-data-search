@@ -12,6 +12,7 @@ source python_env/bin/activate
 pip install Flask psycopg2-binary python-dotenv
 
 
+NDJSON is used so file doesnt have to be loaded into memory to write to it. Additionally it is ideal for using the data since it can be read line by line, instead of having to be loaded all at once. 
 
 ## How to use
 First enter the python virtual environment with the following bash command:  
@@ -31,6 +32,7 @@ then send the POST request with body:
 }
 ```  
 
+
 #### Notes
 - API only allows one level AND/OR nesting. No multi-level.
 - The search is case insensitive. 
@@ -40,3 +42,4 @@ then send the POST request with body:
 
 
 ## Further improvements
+
