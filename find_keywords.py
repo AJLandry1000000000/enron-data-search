@@ -10,6 +10,12 @@ load_dotenv()
 
 app = Flask(__name__)
 
+CHUNK_SIZE = 1000
+
+RESULTS_FILE = 'results.ndjson'
+
+FILE_NAME = os.path.basename(__file__)
+
 def get_db_connection():
     conn = psycopg2.connect(
         dbname=os.getenv('DB_NAME'),
@@ -21,10 +27,15 @@ def get_db_connection():
     return conn
 
 
-def clear_results_file():
-    # Clear the entire JSON file at the start of the script
-    with open('results.json', 'w') as json_file:
-        json.dump({}, json_file)
+def prepare_results_file(request_keys, key_words):
+    # Open the file (using 'w' mode because this clears the files contents by truncating it to zero length)
+    # and write the metadata to the file.
+    with open(RESULTS_FILE, 'w') as json_file:
+        metadata = {
+            "find_keywords_request_keys": request_keys,
+            "find_keywords_keys": key_words,
+        }
+        json_file.write(json.dumps(metadata) + '\n')
 
 
 def get_key_words(keys):
@@ -56,52 +67,59 @@ def get_key_words(keys):
 
 @app.route('/enron-data/search', methods=['POST'])
 def search():
-
     print(request.json)
 
-    keys = request.json.get('key_words')
+    request_keys = request.json.get('key_words')
     
-    if not keys or not isinstance(keys, str):
+    if not request_keys or not isinstance(request_keys, str):
         return jsonify({'error': 'key_words is required and must be a string!'}), 400
     
-    key_words = get_key_words(keys)
-
+    key_words = get_key_words(request_keys)
     conn = get_db_connection()
-
     cur = conn.cursor()
 
     query = """
-    SELECT mid, body
+    -- SELECT mid, body
+    SELECT mid, sender
     FROM message 
     WHERE to_tsvector('english', preprocessed_subject_and_body) @@ to_tsquery(%s);
     """
 
     cur.execute(query, (key_words,))
 
-    results = cur.fetchall()
-    
-    # Clear the results.json file for our new results.
-    clear_results_file()
+    prepare_results_file(request_keys, key_words)
 
-    # Write the results to the results.json file.
-    with open('results.json', 'r+') as json_file:
-        data = json.load(json_file)
-        data["find_keywords_request_keys"] = keys
-        data["find_keywords_keys"] = key_words
-        data["find_keywords_results_exact_match"] = results
-        json_file.seek(0)
-        json.dump(data, json_file, indent=4)
+    # Fetch and process results in chunks.
+    current_chunk = 1
+    current_records = 1
+    while True:
+        chunk = cur.fetchmany(CHUNK_SIZE)
+        if not chunk:  # Break when no more rows to fetch.
+            break
+            
+        print(f'{FILE_NAME} is processing data chunks of size -> {CHUNK_SIZE} | query string -> {key_words} | current chunk -> {current_chunk} | processing records -> {current_records} to {current_records + len(chunk)}')
+        current_records += len(chunk)
+
+        # Append each row as a standalone JSON object.
+        with open(RESULTS_FILE, 'a') as json_file:
+            for row in chunk:
+                json_file.write(json.dumps({
+                    "mid": row[0],
+                    "body": row[1],
+                }) + '\n')
+        
+        current_chunk += 1
 
     cur.close()
     conn.close()
-    return jsonify('')
+    return jsonify({'message': f'Search completed and results have been saved in the {RESULTS_FILE} file.'})
 
 if __name__ == '__main__':
     python_env = os.getenv('ENV')
 
-    print(f'Starting the app in {python_env} mode...')
+    print(f'Starting the app in "{python_env}" mode...')
 
-    debug = python_env == 'dev'
+    debug = (python_env == 'dev')
 
     app.run(debug=debug)
 

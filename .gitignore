@@ -5,8 +5,9 @@
 # Python environment
 python_env/
 
-# The applications results .json file
+# The applications results JSON files
 *.json
+*.ndjson
 
 # Environment variables
 *.env
