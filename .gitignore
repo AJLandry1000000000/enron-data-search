@@ -14,6 +14,7 @@ python_env/
 
 # Temporary files
 *.tmp
+__pycache__/
 
 # SQL folders
 downloaded_sql_dump_files/
