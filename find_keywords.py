@@ -16,6 +16,8 @@ RESULTS_FILE = 'results.ndjson'
 
 FILE_NAME = os.path.basename(__file__)
 
+SIMILARITY_THRESHOLD = 0.6
+
 def get_db_connection():
     conn = psycopg2.connect(
         dbname=os.getenv('DB_NAME'),
@@ -27,13 +29,14 @@ def get_db_connection():
     return conn
 
 
-def prepare_results_file(request_keys, key_words):
+def prepare_results_file(request_keys, and_or_key_word_string, key_words_list):
     # Open the file (using 'w' mode because this clears the files contents by truncating it to zero length)
     # and write the metadata to the file.
     with open(RESULTS_FILE, 'w') as json_file:
         metadata = {
             "find_keywords_request_keys": request_keys,
-            "find_keywords_keys": key_words,
+            "find_keywords_and_or_key_word_string": and_or_key_word_string,
+            "find_keywords_misspelling_allowed_key_words": key_words_list,
         }
         json_file.write(json.dumps(metadata) + '\n')
 
@@ -62,7 +65,81 @@ def get_key_words(keys):
     # Join all processed tokens with " | "
     final_output = ' | '.join(processed_tokens)
     
-    return final_output  
+    return final_output, key_words.split()
+
+
+def execute_exact_match_queries(cur, and_or_key_word_string):
+    match_type = 'exact_match' 
+
+    query_string = """
+    -- SELECT DISTINCT mid, body
+    SELECT DISTINCT mid, sender
+    FROM message 
+    WHERE to_tsvector('english', preprocessed_subject_and_body) @@ to_tsquery(%s);
+    """
+    
+    cur.execute(query_string, (and_or_key_word_string,))
+
+    # Fetch and process results in chunks.
+    current_chunk = 1
+    current_records = 1
+    while True:
+        chunk = cur.fetchmany(CHUNK_SIZE)
+        if not chunk:  # Break when no more rows are fetched from the database.
+            break
+            
+        print(f'{FILE_NAME} is processing "{match_type}" (chunk size {CHUNK_SIZE}) | query string -> {and_or_key_word_string} | current chunk -> {current_chunk} | processing records -> {current_records} to {current_records + len(chunk)}')
+        current_records += len(chunk)
+
+        # Append each row as a standalone JSON object.
+        with open(RESULTS_FILE, 'a') as json_file:
+            for row in chunk:
+                json_file.write(json.dumps({
+                    "match_type": match_type,
+                    "mid": row[0],
+                    "body": row[1],
+                }) + '\n')
+        
+        current_chunk += 1
+
+
+def execute_misspelling_allowed_match_queries(cur, key_words_list):
+    match_type = 'misspelling_allowed_match' 
+
+    for word in key_words_list:
+        query_string = """
+        --SELECT DISTINCT m.mid, m.body
+        SELECT DISTINCT m.mid, m.sender
+        FROM 
+            message m
+        INNER JOIN 
+            preprocessed_text_single_words p ON m.mid = p.mid
+        WHERE 
+            similarity(p.word, %s) > %s
+        """
+        cur.execute(query_string, (word, SIMILARITY_THRESHOLD,))
+        
+        # Fetch and process results in chunks.
+        current_chunk = 1
+        current_records = 1
+        while True:
+            chunk = cur.fetchmany(CHUNK_SIZE)
+            if not chunk:  # Break when no more rows to fetch.
+                break
+                
+            print(f'{FILE_NAME} is processing "{match_type}" (chunk size {CHUNK_SIZE}) for word "{word}" | query string -> {key_words_list} | current chunk -> {current_chunk} | processing records -> {current_records} to {current_records + len(chunk)}')
+            current_records += len(chunk)
+
+            # Append each row as a standalone JSON object.
+            with open(RESULTS_FILE, 'a') as json_file:
+                for row in chunk:
+                    json_file.write(json.dumps({
+                        "match_type": match_type,
+                        "mid": row[0],
+                        "body": row[1],
+                    }) + '\n')
+            
+            current_chunk += 1
 
 
 @app.route('/enron-data/search', methods=['POST'])
@@ -70,49 +147,26 @@ def search():
     print(request.json)
 
     request_keys = request.json.get('key_words')
-    
     if not request_keys or not isinstance(request_keys, str):
         return jsonify({'error': 'key_words is required and must be a string!'}), 400
     
-    key_words = get_key_words(request_keys)
+    and_or_key_word_string, key_words_list = get_key_words(request_keys)
+
+    print(f'and_or_key_word_string: {and_or_key_word_string} || key_words_list: {key_words_list}')
+
     conn = get_db_connection()
     cur = conn.cursor()
 
-    query = """
-    -- SELECT mid, body
-    SELECT mid, sender
-    FROM message 
-    WHERE to_tsvector('english', preprocessed_subject_and_body) @@ to_tsquery(%s);
-    """
+    prepare_results_file(request_keys, and_or_key_word_string, key_words_list)
 
-    cur.execute(query, (key_words,))
-
-    prepare_results_file(request_keys, key_words)
-
-    # Fetch and process results in chunks.
-    current_chunk = 1
-    current_records = 1
-    while True:
-        chunk = cur.fetchmany(CHUNK_SIZE)
-        if not chunk:  # Break when no more rows to fetch.
-            break
-            
-        print(f'{FILE_NAME} is processing data chunks of size -> {CHUNK_SIZE} | query string -> {key_words} | current chunk -> {current_chunk} | processing records -> {current_records} to {current_records + len(chunk)}')
-        current_records += len(chunk)
-
-        # Append each row as a standalone JSON object.
-        with open(RESULTS_FILE, 'a') as json_file:
-            for row in chunk:
-                json_file.write(json.dumps({
-                    "mid": row[0],
-                    "body": row[1],
-                }) + '\n')
-        
-        current_chunk += 1
+    execute_exact_match_queries(cur, and_or_key_word_string)
+    execute_misspelling_allowed_match_queries(cur, key_words_list)
 
     cur.close()
     conn.close()
+
     return jsonify({'message': f'Search completed and results have been saved in the {RESULTS_FILE} file.'})
+
 
 if __name__ == '__main__':
     python_env = os.getenv('ENV')
