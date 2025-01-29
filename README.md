@@ -14,7 +14,7 @@ pip install Flask psycopg2-binary python-dotenv
 
 NDJSON is used so file doesnt have to be loaded into memory to write to it. Additionally it is ideal for using the data since it can be read line by line, instead of having to be loaded all at once. 
 
-WRITE ABOUT HOW THE USER MUST USE THE TABLE CREATION SQL FILE I HAVE BEFORE RUNNING THE PROJECT!
+WRITE ABOUT HOW THE USER MUST USE THE TABLE CREATION SQL FILES (enron_tables_psql.sql, enron_tables_index_adjustments_psql.sql) I HAVE BEFORE RUNNING THE PROJECT!
 
 
 To see PG extensions...

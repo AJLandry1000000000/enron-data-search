@@ -18,7 +18,7 @@ python_env/
 # SQL folders
 downloaded_sql_dump_files/
 mysql_formated_files/
-pg_formated_files/
+pg_formated_files/enron-mysqldump-adjusted_psql.sql
 
 # Miscellaneous
 *.log
