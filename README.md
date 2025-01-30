@@ -1,5 +1,24 @@
 # Enron email search application
 
+# Table of Contents
+
+1. [Introduction](#introduction)
+2. [Task Description](#task-description)
+3. [The Data](#the-data)
+4. [The Tool](#the-tool)
+5. [Input](#input)
+6. [Output](#output)
+7. [Constraints](#constraints)
+8. [Tools and API](#tools-and-api)
+   - [Tools](#tools)
+   - [API](#api)
+9. [Preprocessing, New Columns, and Indexing](#preprocessing-new-columns-and-indexing)
+10. [Approach to Misspelling, AND/OR Operators, and Related Emails](#approach-to-misspelling-andor-operators-and-related-emails)
+    - [AND/OR Operators](#andor-operators)
+    - [Misspellings and Other Artifacts](#misspellings-and-other-artifacts)
+    - [Related Email Data](#related-email-data)
+11. [Further Improvements: AND/OR Operators on Misspelled Keywords](#further-improvements-andor-operators-on-misspelled-keywords)
+
 ## Task description
 It's 2002. You are working as part of the US govt’s legal team on the Enron case, and you need to provide an efficient way to help the lawyers trawl through the email data to find relevant (incriminating) information.
  
@@ -150,10 +169,11 @@ Because we are under such a memory constraint, I decided to incrementally append
 **AND/OR operators**: I used tsquery syntax with the ```to_tsquery()``` function to implement this functionality. The new preprocessed_subject_and_body served as the bases of our "search_vector" column which would take preprocessed_subject_and_body and convert it to tsquery type. After indexing the search_vector column with the special GIN index, our application could query the search_vector using AND/OR logical word searching.  
 See the code for this functionality in ```utils.py -> execute_exact_match_queries()```.
 
-**Misspellings and other artifacts**: The "misspellings and other artifacts" input constraint was implemented using the Postgres pg_trgm extension (see the [Tools and API](#tools-and-api) section for more details). I moved the preprocessed message body column (preprocessed_subject_and_body) into a new table, preprocessed_text_single_words, which contained message ID and the seperated out words from message.preprocessed_subject_and_body (tokenised by spaces). I then used the special GIN pg_trgm index to improve the search time of the pg_trgm tool. 
+**Misspellings and other artifacts**: The "misspellings and other artifacts" input constraint was implemented using the Postgres pg_trgm extension (see the [Tools and API](#tools-and-api) section for more details). I moved the preprocessed message body column (preprocessed_subject_and_body) into a new table, preprocessed_text_single_words, which contained message ID and the seperated out words from message.preprocessed_subject_and_body (tokenised by spaces). I then used the special GIN pg_trgm index to improve the search time of the pg_trgm tool.  
+
 See the code for this functionality in ```utils.py -> execute_misspelling_allowed_match_queries()```. My misspelling query in ```execute_misspelling_allowed_match_queries()```, function uses a similarity() function which measures how close a word is, to our (potentially) misspelled keyword. I used a similarity threshold of 0.6 since my online research, and testing, indicated that 0.6 allowed 1-2 incorrect characters between the keyword and the comparison word. To increase or decrease the similarity precision, change the ```SIMILARITY_THRESHOLD``` variable in ```utils.py```.
 
-**related email data**: The extra "related" emails returned with our matching emails contained related emails such as, the emails recipients, and the senders most common email contact (see the [Preprocessing, new columns, and indexing](#preprocessing-new-columns-and-indexing) section for more info).  
+**Related email data**: The extra "related" emails returned with our matching emails contained related emails such as, the emails recipients, and the senders most common email contact (see the [Preprocessing, new columns, and indexing](#preprocessing-new-columns-and-indexing) section for more info).  
 Both of these columns were prefilled with a subquery so they did not have to be computed at runtime (that would have dramatically decreased performance).
 
 
