@@ -184,6 +184,7 @@ The following features could expland our application and make its use easier:
 - Allow users to filter by date range, sender, or recipient.
 - Allow a NOT keyword in addition to our AND/OR functionality.
 - Allow users to customise the output file (e.g. change the file type, what kind of match_type they want, change the "related" emails metrics, etc)
+- Allow users to search for phrases in additon to individual keywords. e.g. phrases could be wrapped in "" marks.
 
 ## Further improvements: Advanced search options
 **Sentiment Analysis**: For really complex improvements you could use a model trained in Sentiment Analysis. In the context of the Enron email dataset, this can help prioritize emails that exhibit strong emotions (e.g., anger, urgency, or frustration), which might indicate incriminating or important content. The sentiment model could give every message a sentiment_score. This could allow users to filter emails by sentiment (e.g., "show me angry emails").
