@@ -2,25 +2,29 @@
 
 # Table of Contents
 
-1. [Introduction](#introduction)
-2. [Task Description](#task-description)
-3. [The Data](#the-data)
-4. [The Tool](#the-tool)
-5. [Input](#input)
-6. [Output](#output)
-7. [Constraints](#constraints)
-8. [Tools and API](#tools-and-api)
-   - [Tools](#tools)
-   - [API](#api)
-9. [Preprocessing, New Columns, and Indexing](#preprocessing-new-columns-and-indexing)
-10. [Approach to Misspelling, AND/OR Operators, and Related Emails](#approach-to-misspelling-andor-operators-and-related-emails)
-    - [AND/OR Operators](#andor-operators)
-    - [Misspellings and Other Artifacts](#misspellings-and-other-artifacts)
-    - [Related Email Data](#related-email-data)
-11. [Further Improvements: AND/OR Operators on Misspelled Keywords](#further-improvements-andor-operators-on-misspelled-keywords)
-12. [Design Choices](#design-choices)
-13. [How to Use & Results Explanation](#how-to-use--results-explanation)
-14. [Set-up Commands](#set-up-commands)
+1. [Task Description](#task-description)
+    - [The Data](#the-data)
+    - [The Tool](#the-tool)
+    - [Input](#input)
+    - [Output](#output)
+    - [Constraints](#constraints)
+    - [What we want to see](#what-we-want-to-see)
+2. [Set-up Commands](#set-up-commands)
+3. [How to Use & Results Explanation](#how-to-use--results-explanation)
+4. [Design Choices](#design-choices)
+    - [Tools and API](#tools-and-api)
+    - [Preprocessing, New Columns, and Indexing](#preprocessing-new-columns-and-indexing)
+    - [Approach to Misspelling, AND/OR Operators, and Related Emails](#approach-to-misspelling-andor-operators-and-related-emails)
+5. [Further Improvements: AND/OR Operators on Misspelled Keywords](#further-improvements-andor-operators-on-misspelled-keywords)
+6. [Further Improvements: Testing suite](#further-improvements-testing-suite)
+7. [Further Improvements: UX](#futher-improvements-ux)
+8. [Further Improvements: Advanced search option](#further-improvements-advanced-search-options)
+9. [Further Improvements: Other tools](#further-improvements-other-tools)
+
+
+
+
+
 
 ## Task description
 It's 2002. You are working as part of the US govt’s legal team on the Enron case, and you need to provide an efficient way to help the lawyers trawl through the email data to find relevant (incriminating) information.
