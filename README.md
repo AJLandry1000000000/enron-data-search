@@ -18,6 +18,9 @@
     - [Misspellings and Other Artifacts](#misspellings-and-other-artifacts)
     - [Related Email Data](#related-email-data)
 11. [Further Improvements: AND/OR Operators on Misspelled Keywords](#further-improvements-andor-operators-on-misspelled-keywords)
+12. [Design Choices](#design-choices)
+13. [How to Use & Results Explanation](#how-to-use--results-explanation)
+14. [Set-up Commands](#set-up-commands)
 
 ## Task description
 It's 2002. You are working as part of the US govt’s legal team on the Enron case, and you need to provide an efficient way to help the lawyers trawl through the email data to find relevant (incriminating) information.
@@ -99,7 +102,7 @@ Now that you are set up, start the python server with:
 ```
 python find_keywords.py
 ```
-
+Note: For the most performance version of my application, change the ```ENV``` variable in .env to ```ENV="prod"```.
 
 ## How to use & results explanation
 First enter the python virtual environment with the following bash command (if you haven't already):  
