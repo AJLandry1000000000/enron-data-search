@@ -10,29 +10,27 @@ def convert_mysql_to_postgres(mysql_file, postgres_file):
     """
     with open(mysql_file, 'r') as f_in, open(postgres_file, 'w') as f_out:
         for line in f_in:
-            # 1. Convert `AUTO_INCREMENT` to `SERIAL` and add `PRIMARY KEY`
+            # Convert `AUTO_INCREMENT` to `SERIAL` and add `PRIMARY KEY`
             line = re.sub(r'`(\w+)`\s+int\(\d+\)\s+unsigned\s+NOT\s+NULL\s+AUTO_INCREMENT', r'\1 SERIAL PRIMARY KEY', line)
 
-            # 2. Convert `TIMESTAMP` with `DEFAULT CURRENT_TIMESTAMP` to `TIMESTAMP WITH TIME ZONE DEFAULT NOW()`
+            # Convert `TIMESTAMP` with `DEFAULT CURRENT_TIMESTAMP` to `TIMESTAMP WITH TIME ZONE DEFAULT NOW()`
             line = re.sub(r'TIMESTAMP\s*DEFAULT\s*CURRENT_TIMESTAMP', 'TIMESTAMP WITH TIME ZONE DEFAULT NOW()', line)
 
-            # 3. Convert `DATETIME` with `DEFAULT CURRENT_TIMESTAMP` to `TIMESTAMP WITH TIME ZONE DEFAULT NOW()`
+            # Convert `DATETIME` with `DEFAULT CURRENT_TIMESTAMP` to `TIMESTAMP WITH TIME ZONE DEFAULT NOW()`
             line = re.sub(r'DATETIME\s*DEFAULT\s*CURRENT_TIMESTAMP', 'TIMESTAMP WITH TIME ZONE DEFAULT NOW()', line)
 
-            # 4. Convert `TINYINT(1)` to `BOOLEAN`
+            # Convert `TINYINT(1)` to `BOOLEAN`
             line = re.sub(r'TINYINT\(1\)', 'BOOLEAN', line)
 
-            # 5. Convert `ENUM` to `VARCHAR` (adjust length as needed)
+            # Convert `ENUM` to `VARCHAR` (adjust length as needed)
             line = re.sub(r'ENUM\(\'(.*?)\'\)', lambda m: "VARCHAR({})".format(len(m.group(1))), line)
 
-            # 6. Remove `ENGINE=InnoDB` (PostgreSQL doesn't use it)
+            # Remove `ENGINE=InnoDB` (PostgreSQL doesn't use it)
             line = re.sub(r'ENGINE=InnoDB', '', line)
 
-            # 7. Remove `DEFAULT CHARSET=latin1` (PostgreSQL uses UTF-8 by default)
+            # Remove `DEFAULT CHARSET=latin1` (PostgreSQL uses UTF-8 by default)
             line = re.sub(r'DEFAULT CHARSET=latin1', '', line)
 
-            # 8. Handle potential issues (you might need to add more rules here)
-            # ...
             # Replace MySQL comments (#) with PostgreSQL comments (--)
             line = re.sub(r'#', '--', line)
 
@@ -63,6 +61,6 @@ def convert_mysql_to_postgres(mysql_file, postgres_file):
 
 if __name__ == "__main__":
     mysql_file = "enron-mysqldump-adjusted.sql"
-    postgres_file = "enron-mysqldump-adjusted_psql.sql"  # Updated output filename
+    postgres_file = "enron-mysqldump-adjusted_psql.sql" 
     convert_mysql_to_postgres(mysql_file, postgres_file)
     print(f"MySQL to PostgreSQL conversion complete. Output saved to: {postgres_file}")
