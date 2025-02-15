@@ -31,7 +31,7 @@ It's 2002. You are working as part of the US govt’s legal team on the Enron ca
  
 ### The data
 There are a number of versions of the Enron data set: 
-- SQL dump: [http://www.ahschulz.de/enron-email-data/](http://www.ahschulz.de/enron-email-data/) <- I chose this one!
+- SQL dump: [http://www.ahschulz.de/enron-email-data/](http://www.ahschulz.de/enron-email-data/) <-- I chose this one!
 - CSV flat file: [https://www.kaggle.com/datasets/wcukierski/enron-email-dataset](https://www.kaggle.com/datasets/wcukierski/enron-email-dataset)
 - Flat MIME files: [https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz](https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz)  
 
